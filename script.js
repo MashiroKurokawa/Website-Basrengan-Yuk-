@@ -35,7 +35,7 @@ let isSignupFlow = false;
 
 const indoPhoneRegex = /^(08|\+62)\d{8,11}$/;
 
-// KONTAK ADMIN (Sesuai yang diminta)
+// KONTAK ADMIN
 const adminWA = "https://wa.me/6283898115619";
 const adminEmail = "mailto:basrenganyuk@gmail.com";
 
@@ -267,70 +267,93 @@ function updateTrackView() {
 }
 
 // ==========================================
-// 5. FITUR LAYANAN KONSUMEN (CHATBOT FAQ)
+// 5. FITUR LAYANAN KONSUMEN (INTEGRASI AI GEMINI LANGSUNG)
 // ==========================================
+
+// 🔴 GANTI TEKS DI BAWAH DENGAN API KEY DARI GOOGLE AI STUDIO KAMU
+const GEMINI_API_KEY = "TARUH_API_KEY_KAMU_DISINI"; 
+
 function toggleChat() {
     const chatWindow = document.getElementById('chat-window');
     chatWindow.style.display = (chatWindow.style.display === 'none' || chatWindow.style.display === '') ? 'flex' : 'none';
 }
-function handleEnter(event) { if (event.key === "Enter") sendMessage(); }
 
-function sendMessage() {
+function handleEnter(event) { 
+    if (event.key === "Enter") sendMessage(); 
+}
+
+async function sendMessage() {
     const inputField = document.getElementById('user-input');
-    const message = inputField.value.trim().toLowerCase();
+    const message = inputField.value.trim();
     const chatBody = document.getElementById('chat-body');
 
     if (message === '') return;
-    chatBody.innerHTML += `<div class="chat-bubble user">${inputField.value}</div>`;
+
+    chatBody.innerHTML += `<div class="chat-bubble user">${message}</div>`;
     inputField.value = '';
     chatBody.scrollTop = chatBody.scrollHeight;
 
-    setTimeout(() => {
-        let botReply = "";
+    const loadingId = "loading-" + Date.now();
+    chatBody.innerHTML += `<div class="chat-bubble bot" id="${loadingId}">
+        <span style="opacity: 0.7;">AI sedang mengetik... 🤖</span>
+    </div>`;
+    chatBody.scrollTop = chatBody.scrollHeight;
+
+    try {
+        const systemInstruction = `
+        Kamu adalah Customer Service yang ramah, asik, dan gaul untuk brand cemilan bernama "Basrengan-Yuk!".
+        Tagline brand: "Your Buddy Snack" (Camilan yang menjadi teman saat beraktivitas).
         
-        if (message.includes('apa itu basreng')) {
-            botReply = "Basreng (Bakso Goreng) adalah camilan renyah khas yang digoreng tipis dengan racikan bumbu spesial. Cocok banget jadi 'Your Buddy Snack'!";
-        } 
-        else if (message.includes('halal') || message.includes('fresh')) {
-            botReply = "Tentu! Basreng kami 100% Halal dan selalu dibuat/digoreng fresh setiap hari.";
-        } 
-        else if (message.includes('harga') || message.includes('paket hemat')) {
-            botReply = "Harga promo kami sangat terjangkau, hanya Rp 10.000 saja per paketnya!";
-        } 
-        else if (message.includes('promo') || message.includes('diskon')) {
-            botReply = "Ada dong! Masukkan kode promo 'BSRNG10' saat checkout untuk dapat potongan harga. Pembelian jumlah banyak (reseller/acara) bisa hubungi admin untuk diskon ekstra.";
-        } 
-        else if (message.includes('varian') || message.includes('rasa') || message.includes('selain basreng')) {
-            botReply = "Saat ini kami fokus menyajikan basreng terbaik dengan 3 pilihan varian rasa: Original, Pedas, dan Rendang.";
-        } 
-        else if (message.includes('level') || message.includes('request')) {
-            botReply = "Bisa banget! Kamu bisa pilih rasa 'Pedas' saat memesan. Jika butuh level kepedasan khusus, tambahkan catatan saat checkout atau hubungi admin.";
-        } 
-        else if (message.includes('cara pesan') || message.includes('pesan melalui website') || message.includes('gofood') || message.includes('shopee')) {
-            botReply = "Saat ini pemesanan eksklusif dan termudah bisa dilakukan langsung melalui website ini. Buka tab '🍔 Menu', pilih varian, dan langsung checkout!";
-        } 
-        else if (message.includes('luar kota') || message.includes('ongkir') || message.includes('pengiriman')) {
-            botReply = "Kami bisa mengirim ke seluruh Indonesia! Lama pengiriman dan ongkos kirim (ongkir) tergantung ekspedisi tujuan kota kamu.";
-        } 
-        else if (message.includes('cod')) {
-            botReply = "Tentu tersedia! Pilih metode 'Bayar di Tempat (COD)' saat proses checkout ya.";
-        } 
-        else if (message.includes('jumlah banyak') || message.includes('reseller') || message.includes('acara')) {
-            botReply = "Wah, bisa banget! Kami menerima pesanan partai besar untuk reseller maupun acara. Silakan hubungi admin untuk penawaran menarik.";
-        } 
-        else if (message.includes('lokasi') || message.includes('toko')) {
-            botReply = "Untuk saat ini kami fokus beroperasi secara online untuk melayani pengiriman seluruh Indonesia. Pengiriman dilakukan dari dapur pusat kami.";
-        } 
-        else if (message.includes('hubungi') || message.includes('admin') || message.includes('whatsapp') || message.includes('wa') || message.includes('email') || message.includes('rusak') || message.includes('kecewa')) {
-            botReply = `Butuh bantuan lebih lanjut atau ingin komplain? Tim admin kami siap membantu melalui:<br>
-            <a href="${adminWA}" target="_blank" class="wa-link">📱 Chat WA Admin</a>
-            <a href="${adminEmail}" class="wa-link">📧 Email Admin</a>`;
-        } 
-        else {
-            botReply = `Maaf, saya belum mengerti. Kamu bisa tanyakan seputar harga, rasa, ongkir, halal, atau ketik 'admin' untuk bantuan langsung.`;
+        Informasi Produk:
+        - Harga 1 Paket: Rp 10.000.
+        - Pilihan Varian Rasa: Original (Gurih Asin), Pedas (Daun Jeruk), dan Rendang.
+        - Produk 100% Halal dan digoreng fresh setiap hari.
+        
+        Informasi Pemesanan & Pengiriman:
+        - Cara pesan: Langsung klik menu "Pesan Sekarang" di website ini.
+        - Pengiriman: Bisa dikirim ke luar kota ke seluruh Indonesia.
+        - Metode bayar: Tersedia Transfer BCA, QRIS, dan COD (Bayar di tempat).
+        
+        Kontak Admin (Hanya berikan ini jika pelanggan ada masalah/komplain berat atau ingin beli grosir/reseller):
+        - WhatsApp: +62 838-9811-5619
+        - Email: basrenganyuk@gmail.com
+        
+        Aturan menjawab:
+        - Jawab dengan singkat, padat, dan jelas (maksimal 2-3 kalimat).
+        - Gunakan emoji agar terlihat santai dan ramah.
+        - Jika ditanya hal di luar basreng atau cemilan, tolak dengan sopan dan arahkan kembali ke produk.
+        
+        Pertanyaan pelanggan: "${message}"
+        `;
+
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`;
+        
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                contents: [{
+                    parts: [{ text: systemInstruction }]
+                }]
+            })
+        });
+
+        const data = await response.json();
+        
+        if (data.candidates && data.candidates.length > 0) {
+            let botReply = data.candidates[0].content.parts[0].text;
+            botReply = botReply.replace(/\n/g, "<br>");
+            document.getElementById(loadingId).innerHTML = botReply;
+        } else {
+            throw new Error("Balasan kosong");
         }
 
-        chatBody.innerHTML += `<div class="chat-bubble bot">${botReply}</div>`;
-        chatBody.scrollTop = chatBody.scrollHeight;
-    }, 1000); 
+    } catch (error) {
+        console.error("Error:", error);
+        document.getElementById(loadingId).innerHTML = `Maaf, koneksi AI sedang terputus. 🥺 Silakan hubungi admin WA kami di <a href="https://wa.me/6283898115619" target="_blank" class="wa-link">sini</a>.`;
+    }
+
+    chatBody.scrollTop = chatBody.scrollHeight;
 }
